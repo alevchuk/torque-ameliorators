@@ -1,0 +1,100 @@
+#!/usr/bin/env ruby
+
+# torque-ameliorators  interrogate Torque to report state of cluster
+# Copyright (C) 2011 Aleksandr Levchuk
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+
+def queue
+  header = "JobId User JobName State Nodes"
+
+  body = `qstat -n -1 |
+   grep '^[0-9]' |
+   awk '{print $1,$2,$4,$10,$12}'`
+  
+  body = body.split("\n").collect do |line|
+    x = Hash.new(0)
+    if line =~ / (n.*)/
+      m = $1
+      m.split('+').collect{|i| i.sub(/\/[0-9]+/, '')}.each do |i|
+        x[i] = x[i] + 1
+      end
+      line.gsub!(m, x.keys.sort.collect{|k| "#{k}(#{x[k]})"}.join(','))
+    end
+    next line
+  end.join("\n")
+
+  body = body.split("\n").collect do |line|
+    next line.gsub ".torque-se", ""
+  end.join("\n")
+
+  puts `echo "#{header}\n#{body}" | column -t`
+
+end
+
+COMMANDS = {
+  'queue' => self.method("queue"),
+  'users' => '/usr/local/bin/busy-users',
+  'violations' => '/usr/local/bin/check',
+  'nodes' => '/usr/local/bin/free-nodes',
+  'processor-cores' => '/usr/local/bin/free-cores',
+}
+
+def match(x)
+  x = x.reverse.chomp('-').chomp('-').reverse
+  matches = COMMANDS.keys.select {|c| c =~ /^#{x}/}
+  if matches.size == 1
+    return matches[0]
+
+  elsif matches.empty?
+   STDERR.puts "ERROR: Did not match any command"
+   usage
+   exit
+
+  else
+    STDERR.puts "ERROR: Command is unbiguous. Please type more letters."
+    STDERR.puts
+    STDERR.puts "Possible matches were:"
+    matches.each{|m| STDERR.puts "  #{m}"}
+    exit
+
+  end
+end
+
+def usage
+  puts "see"
+  COMMANDS.keys.collect{|c| puts "  #{c}"}
+  puts
+  puts "Type only the first letter (for example \"see q\")"
+end
+
+cmd = 
+if ARGV.empty?
+  usage
+  exit
+
+elsif ARGV.size == 1
+  match(ARGV[0])
+
+else
+  STDERR.puts "ERROR: Too many arguments. Please type only 1 command"
+  exit
+
+end
+
+if COMMANDS[cmd].class == String
+  system COMMANDS[cmd]
+else
+  COMMANDS[cmd].call
+end

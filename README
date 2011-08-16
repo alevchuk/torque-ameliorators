@@ -1,0 +1,29 @@
+torque-ameliorators 
+  Ruby scripts that interrogate Torque to report state of the cluster
+
+The command "see" provides an easy way to find other commands.
+
+see
+  processor-cores
+  violations
+  nodes
+  users
+  queue
+
+Examples:
+  see p
+  see v
+  see n
+  see u
+  see q
+
+
+"see violations" is currently the only command that relies on ssh'ing into all of the nodes
+via the "on-all-nodes-run" command
+
+
+DEPENDENCIES:
+
+ - Torque
+ - Ruby
+ - Ruby library (for "on-all-nodes-run" and indirectly "see violations"): open3 

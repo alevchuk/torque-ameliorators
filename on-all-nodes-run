@@ -1,0 +1,93 @@
+#!/usr/bin/ruby
+
+# torque-ameliorators  interrogate Torque to report state of cluster
+# Copyright (C) 2011 Aleksandr Levchuk
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+
+EXCLUDE_FILE = "/etc/torque-qnodes-excludes"
+
+require "open3"
+
+# Non-interactive, no password asking, and seasonable timeouts
+SSH_OPTIONS = ["-o PreferredAuthentications=publickey,hostbased,gssapi,gssapi-with-mic",
+               "-o ForwardX11=no",
+               "-o BatchMode=yes",
+               "-o SetupTimeOut=5",
+               "-o ServerAliveInterval=5",
+               "-o ServerAliveCountMax=2"
+              ].join(" ")
+
+SSH    = "/usr/bin/ssh #{SSH_OPTIONS}"
+MKDIR  = "/bin/mkdir"
+
+raise "Pleae give this command at least one argument" if ARGV.size < 1
+COMMAND = ARGV[0..-1].join(' ')
+
+output_o = {}
+output_e = {}
+
+
+IO_CONNECTIONS_TO_REMOTE_PROCESSES = {}
+
+def on_all_nodes(&block)
+  nodes = []
+  #Kernel.open('|qnodes | grep -v "^ " | grep -v "^$"') do |f|
+  Kernel.open("|qnodes | grep -v -f #{EXCLUDE_FILE}") do |f|
+    while line = f.gets
+      i = line.split(' ').first
+      nodes.push(i)
+    end
+  end
+  nodes.sort.each {|n| block.call(n)}
+end
+
+
+# Create processes
+on_all_nodes do |node|
+  stdin, stdout, stderr = Open3.popen3("#{SSH} #{node} \"#{COMMAND}\"")
+  IO_CONNECTIONS_TO_REMOTE_PROCESSES[node] = [stdin, stdout, stderr]
+end
+
+
+has_remote_errors = false
+
+# Collect results
+on_all_nodes do |node|
+  stdin, stdout, stderr = IO_CONNECTIONS_TO_REMOTE_PROCESSES[node]
+
+  stdin.close
+
+  e_thread = Thread.new do
+    while line = stderr.gets
+      line.chomp!
+      STDERR.puts "#{node} ERROR: #{line}"
+      has_remote_errors = true
+    end
+  end
+
+  o_thread = Thread.new do
+    while line = stdout.gets
+      line.chomp!
+      puts "#{node}      : #{line}"
+    end
+  end
+
+  e_thread.join
+  o_thread.join
+
+end
+
+
+exit(1) if has_remote_errors

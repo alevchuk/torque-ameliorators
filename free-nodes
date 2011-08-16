@@ -1,0 +1,58 @@
+#!/usr/bin/ruby
+
+# torque-ameliorators  interrogate Torque to report state of cluster
+# Copyright (C) 2011 Aleksandr Levchuk
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+
+EXCLUDES_FILE = "/etc/torque-qnodes-excludes"
+WINDOW_WIDTH = 30
+
+ALL_NODES = (1..34).to_a.collect{|i| "n#{i.to_s.rjust(2, '0')}"}
+# n01 n02 ...
+
+nodes_in_torque = Kernel.open("|qnodes | grep -v -f #{EXCLUDES_FILE}") do |f|
+  f.collect do |line|
+    line.split(' ').first
+  end
+end
+
+nodes_down_in_torque = Kernel.open("|qnodes -l | grep -v -f #{EXCLUDES_FILE}") do |f|
+  f.collect do |line|
+    line.split(' ').first
+  end
+end
+
+nodes_down = (ALL_NODES - nodes_in_torque) + nodes_down_in_torque
+
+nodes_up = nodes_in_torque - nodes_down_in_torque
+
+
+# Among the "free" nodes, find ones that do NOT have any jobs
+nodes_100_free =
+  `qnodes`.split("\n\n").select {|n| n =~ /state = free/ and !(n =~ /jobs = /)}
+nodes_100_free.collect! {|line| line.split("\n").first }
+nodes_100_free = nodes_100_free.select {|i| nodes_in_torque.include? i} # To remove excludes
+
+
+puts "Nodes up: ".rjust(WINDOW_WIDTH) + nodes_up.join(' ')
+puts "Total: ".rjust(WINDOW_WIDTH) + nodes_up.size.to_s
+puts
+
+puts "Nodes down: ".rjust(WINDOW_WIDTH) + nodes_down.join(' ')
+puts "Total: ".rjust(WINDOW_WIDTH) + nodes_down.size.to_s
+puts
+
+puts "Nodes that are 100% free: ".rjust(WINDOW_WIDTH) + nodes_100_free.join(' ')
+puts "Total: ".rjust(WINDOW_WIDTH)  + nodes_100_free.size.to_s

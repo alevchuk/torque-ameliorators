@@ -1,0 +1,85 @@
+#!/usr/bin/ruby
+
+# torque-ameliorators  interrogate Torque to report state of cluster
+# Copyright (C) 2011 Aleksandr Levchuk
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+
+NAME = File.basename(__FILE__)
+
+QSTAT = "qstat -f1"
+
+if ARGV.size > 2  or ARGV[0] == "--help" or ARGV[0] == "-h"
+  puts "Usage: #{NAME} [<user>] [--raw]" 
+  exit
+end
+
+RAW  = ARGV.delete("--raw")
+USER = ARGV[0]
+
+
+TASKS = {}
+USERS = {}
+
+# Parse (populate TASKS)
+last_job_id = nil
+Kernel.open("|#{QSTAT}") do |stdout|
+  while line = stdout.gets
+    if line =~ /^Job Id: ([0-9]+)\./
+      last_job_id = $1.to_i
+      TASKS[last_job_id] = {}
+    else
+      key, val = line.split('=').collect{|l| l.strip}
+      TASKS[last_job_id][key] = val
+    end
+  end
+end
+
+# Extract (populate USERS)
+TASKS.each_pair do |key, val|
+  next if val["job_state"] != 'R'
+
+  user, host = val["Job_Owner"].split('@')
+  USERS[user] ||= Hash.new(0)
+
+  nodes = val["exec_host"].split(/\/[0-9]+\+/)
+  nodes = nodes[0..-2] + [nodes.last.split("/").first] unless nodes.nil?
+ 
+  nodes.each do |n|
+    USERS[user][n] += 1
+  end
+end
+
+# Print
+if RAW
+  USERS.each_pair do |user, reservations|
+    next unless USER == user unless USER.nil?
+    reservations.each_pair do |node, cores_reserved|
+      puts "#{node} #{user} #{cores_reserved * 100}"
+    end
+  end
+
+else
+  USERS.sort{|l,r|
+    l[1].values.inject{|i,j|i+j} <=> r[1].values.inject{|i,j|i+j}
+  }.each do |user, reservations|
+    next unless USER == user unless USER.nil?
+    puts "#{user}"
+    reservations.each_pair do |node, cpu_time_reserved|
+      puts "  #{node} #{cpu_time_reserved} cores"
+    end
+    puts "  #{reservations.values.inject{|i,j|i+j}} cores in use"
+    puts
+  end
+end

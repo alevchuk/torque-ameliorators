@@ -1,0 +1,126 @@
+#!/usr/bin/ruby
+
+# torque-ameliorators  interrogate Torque to report state of cluster
+# Copyright (C) 2011 Aleksandr Levchuk
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+
+NAME = File.basename(__FILE__)
+
+QSTAT_RESERVATIONS_OF  = "/usr/local/bin/busy-users --raw"
+CPU_OF_ALL_NODES       = "/usr/local/bin/cpu-of-all-nodes --raw"
+
+FORGIVENESS_A = 30 # this abs. amount (in CPU %) allowed to surpass reservation
+FORGIVENESS_B = 50 # everything above this is allowed during underutilization
+
+
+# Read Options
+
+#RAW       = !ARGV.delete("--raw").nil?
+forgive   = ARGV.delete("--no-forgivness").nil?
+forgive   = ARGV.delete("-n").nil? if forgive
+FORGIVE = forgive
+
+HELP      = (!(ARGV.delete("-h").nil?) or !(ARGV.delete("--help").nil?))
+VALID_ARGV_SIZES = [0, 1]
+
+unknowns = ARGV.select {|i| i =~ /^-/}
+unknowns.each {|u| puts "#{NAME}: Unknown option #{u}"; ARGV.delete(u)}
+
+if !(VALID_ARGV_SIZES.include? ARGV.size) or HELP
+  puts "Usage: #{NAME} [<user>] [--no-forgivness]" # No [--raw] yet
+  exit
+end
+
+USER = ARGV[0]
+
+
+
+# Read Data
+
+def readin_data(read_io)
+  cpu_pre_user_per_node = {}
+  while line = read_io.gets
+    node, user, cpu = line.split(' ')
+    cpu_pre_user_per_node[user] ||= Hash.new(0.0)
+    cpu_pre_user_per_node[user][node] = cpu.to_f
+  end
+ 
+  return cpu_pre_user_per_node
+end
+
+CPUS =
+  Kernel.open("|#{CPU_OF_ALL_NODES}") {|stdout| readin_data(stdout)}
+
+RESERVATIONS =
+  Kernel.open("|#{QSTAT_RESERVATIONS_OF}") {|stdout| readin_data(stdout)}
+
+
+# Print the Violators info
+
+RESERVATIONS.each_pair do |user, nodes_reserved|
+  next if user != USER unless USER.nil?
+
+  sins = []
+
+  nodes_used = (CPUS[user] or Hash.new(0.0))
+  nodes_reserved.each_pair do |node, cpu_reserved|
+    cpu_used = nodes_used[node]
+   
+    if  cpu_used < cpu_reserved # Violations (cpu_used > cpu_reserved) later
+      if ((1 - cpu_used/cpu_reserved) * 100) > FORGIVENESS_B or 
+         (!FORGIVE and cpu_used !=  cpu_reserved)
+        sins.push " #{node}: " +
+          "#{cpu_reserved}% CPU reserved, " +
+          "but #{cpu_used.to_s.rjust(5)}% CPU is used"
+
+          #"#{((1 - cpu_used/cpu_reserved) * 100).round.to_s.rjust(2)}% " + 
+          #"of the node not in use"
+      end 
+    end
+  end
+
+  if !sins.empty?
+    puts "#{user} is underutilizing:"
+    puts sins
+    puts
+  end
+end
+
+
+CPUS.each_pair do |user, nodes_used|
+  next if user != USER unless USER.nil?
+
+  sins = []
+
+  nodes_reserved = (RESERVATIONS[user] or Hash.new(0.0))
+  nodes_used.each_pair do |node, cpu_used|
+    cpu_reserved = nodes_reserved[node]
+    cpu_used = cpu_used
+
+    pretended_cpu_reserved =
+      FORGIVE ? cpu_reserved + FORGIVENESS_A : cpu_reserved
+
+    if cpu_used > pretended_cpu_reserved
+      sins.push "  VIOLATING #{node}: " +
+	"#{cpu_reserved}% CPU reserved, but #{cpu_used}% is used"
+    end
+  end
+
+  if !sins.empty?
+    puts user
+    puts sins
+    puts
+  end
+end

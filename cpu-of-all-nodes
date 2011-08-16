@@ -1,0 +1,103 @@
+#!/usr/bin/ruby
+
+# torque-ameliorators  interrogate Torque to report state of cluster
+# Copyright (C) 2011 Aleksandr Levchuk
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+
+NAME = File.basename(__FILE__)
+ON_ALL_NODES_RUN = "/usr/local/bin/on-all-nodes-run"
+PS = "/bin/ps"
+
+PASSWD = File.open('/etc/passwd') {|f| f.readlines}
+
+if ARGV[0] == "--help" or ARGV[0] == "-h"
+  puts "Usage: #{NAME} [<user>] [--raw]"
+  exit
+end
+
+if ARGV.delete("-u") or ARGV.delete("--user")
+  STDERR.puts "#{NAME}: WARNING: The -u and --by-user options were depricated"
+end
+
+RAW = ARGV.delete("--raw")
+USER = ARGV[0]
+
+by_user = {}
+by_node = {}
+
+cmd = "#{ON_ALL_NODES_RUN} #{PS} axho \\'%u %C\\'"
+#puts cmd
+#exit
+File.popen(cmd) do |incoming|
+  line = incoming.gets
+
+  while line
+    line_ahead = incoming.gets
+
+    node, user, cpu = line.split(/[ :]+/)
+
+    if user =~ /^[0-9]+$/ 
+      PASSWD.each do |passwd_line|
+        if passwd_line =~ /^([^:]+):.?:#{user}/ 
+          user = $1
+          break
+        end
+      end 
+    end
+
+
+    unless cpu.to_f == 0.0
+      by_node[node] ||= {}
+      by_node[node][user] ||= 0
+      by_node[node][user] += cpu.to_f
+      by_user[user] ||= {}
+      by_user[user][node] ||= 0
+      by_user[user][node] += cpu.to_f
+    end
+    
+    if line_ahead.nil?
+      node_ahead, user_ahead, cpu_ahead = [nil, nil, nil]
+    else
+      node_ahead, user_ahead, cpu_ahead = line_ahead.split(/[ :]+/)
+    end
+
+    if RAW and node_ahead != node and !(by_node[node].nil?)
+      by_node[node].each do |user, cpu|
+        if USER.nil? or USER == user
+          puts "#{node} #{user} #{cpu}"
+        end
+      end
+    end
+
+    line = line_ahead
+  end
+end
+
+
+if !RAW
+
+  by_user = # sort by nodes used
+    by_user.sort {|i1, i2| i1[1].size <=> i2[1].size}
+
+  by_user.each do |user, data|
+    if USER.nil? or USER == user
+      puts "#{user}"
+      data = data.sort {|i1, i2| i1[0] <=> i2[0]} # sort by node name
+      data.each {|node, cpu| puts " #{node} #{cpu}"}
+      puts
+    end
+  end
+
+end
