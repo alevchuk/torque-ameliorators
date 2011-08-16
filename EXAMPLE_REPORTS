@@ -1,0 +1,270 @@
+see
+  processor-cores
+  violations
+  nodes
+  users
+  queue
+
+Type only the first letter (for example "see q")
+
+
+
+see p
+#########################
+n31: 2 cores free
+n33: 20 cores free
+n34: 11 cores free
+33 (12.9%) free
+256 total
+
+
+
+see v
+#########################
+userxxx1 is underutilizing:
+ n06: 100.0% CPU reserved, but   0.0% CPU is used
+
+userxxx2 is underutilizing:
+ n31: 400.0% CPU reserved, but   0.0% CPU is used
+ n14: 400.0% CPU reserved, but   0.0% CPU is used
+
+userxxx3
+  VIOLATING n30: 0.0% CPU reserved, but 86.2% is used
+
+
+
+see n
+#########################
+                    Nodes up: n04 n05 n08 n09 n10 n11 n12 n14 n16 n17 n18 n19 n21 n26 n27 n29 n30 n31 n33 n34
+                       Total: 22
+
+                  Nodes down: n01 n02 n03 n06 n07 n13 n15 n20 n23 n25 n28 n32
+                       Total: 12
+
+    Nodes that are 100% free: n30
+                       Total: 0
+
+
+
+see u
+#########################
+userxxx4
+  n11 3 cores
+  n33 6 cores
+  n34 4 cores
+  n04 2 cores
+  n27 1 cores
+  16 cores in use
+
+userxxx5
+  n08 1 cores
+  n30 8 cores
+  n09 4 cores
+  n31 1 cores
+  n10 4 cores
+  n11 1 cores
+  n24 4 cores
+  n26 7 cores
+  n16 1 cores
+  n27 7 cores
+  n17 1 cores
+  n29 7 cores
+  n18 4 cores
+  50 cores in use
+
+userxxx6
+  n19 5 cores
+  n08 6 cores
+  n09 4 cores
+  n10 4 cores
+  n21 7 cores
+  n11 3 cores
+  n22 6 cores
+  n12 1 cores
+  n24 1 cores
+  n14 4 cores
+  n04 3 cores
+  n05 4 cores
+  n16 7 cores
+  n17 5 cores
+  60 cores in use
+
+
+
+see q
+#########################
+
+JobId   User      JobName           State  Nodes
+269511  xxxxxxxx  Blastall_V2.sh    R      n22(1)
+273067  xxxxxxxx  run.sh            R      n06(1)
+273364  xxxxxxxx  tBlastxall_seq_1  R      n06(1)
+273646  xxxxxxxx  007-species-of-c  R      n06(1)
+273970  xxxxxxxx  sa.sh             R      n04(1)
+273971  xxxxxxxx  sa.sh             R      n04(1)
+273972  xxxxxxxx  sa.sh             R      n04(1)
+274024  xxxxxxxx  STDIN             R      n13(2)
+274366  xxxxxxxx  sa.sh             R      n33(1)
+274372  xxxxxxxx  sa.sh             R      n33(1)
+274905  xxxxxxxx  STDIN             R      n14(4)
+275163  xxxxxxxx  NetSur_ARSUMCLF_  R      n04(1)
+275164  xxxxxxxx  NetSur_ARSUMCLF_  R      n11(1)
+275174  xxxxxxxx  SSCUSUMCL_4_2000  R      n11(1)
+275175  xxxxxxxx  SSCUSUMCL_4_2000  R      n11(1)
+275300  xxxxxxxx  STDIN             R      n31(4)
+275991  xxxxxxxx  command_1wbv_n.s  R      n33(4)
+275992  xxxxxxxx  command_1wbv_nd.  R      n33(4)
+275993  xxxxxxxx  command_1w82_n.s  R      n33(4)
+275994  xxxxxxxx  command_1w82_nd.  R      n33(4)
+275995  xxxxxxxx  command_3gcp_f.s  R      n33(4)
+275996  xxxxxxxx  command_1kv2_n.s  R      n34(4)
+275997  xxxxxxxx  command_1wbn_n.s  R      n34(4)
+275998  xxxxxxxx  command_3hv4_n.s  R      n34(4)
+275999  xxxxxxxx  command_1kv1_n.s  R      n34(4)
+276000  xxxxxxxx  command_1w83_f.s  R      n34(4)
+276001  xxxxxxxx  command_1wbs_n.s  R      n34(4)
+276002  xxxxxxxx  command_to5_n.sh  R      n34(4)
+276003  xxxxxxxx  command_to7_n.sh  R      n34(4)
+276205  xxxxxxxx  SPDSUMTTchisq5_5  R      n33(1)
+276206  xxxxxxxx  SPDSUMTTmgam1_5_  R      n33(1)
+276207  xxxxxxxx  SPDSUMTTmgam1_5_  R      n33(1)
+276208  xxxxxxxx  SPDSUMTTmgam1_5_  R      n33(1)
+276209  xxxxxxxx  SPDSUMTTmgam3_5_  R      n33(1)
+276210  xxxxxxxx  SPDSUMTTmgam3_5_  R      n33(1)
+276211  xxxxxxxx  SPDSUMTTmgam3_5_  R      n34(1)
+276212  xxxxxxxx  SPDSUMTTmgam5_5_  R      n34(1)
+276213  xxxxxxxx  SPDSUMTTmgam5_5_  R      n34(1)
+276214  xxxxxxxx  SPDSUMTTmgam5_5_  R      n34(1)
+276495  xxxxxxxx  SSSUMTcauSS_5.sh  R      n27(1)
+277495  xxxxxxxx  test51.sh         R      n04(1)
+277496  xxxxxxxx  test52.sh         R      n04(1)
+277497  xxxxxxxx  test53.sh         R      n04(1)
+277498  xxxxxxxx  test54.sh         R      n05(1)
+277499  xxxxxxxx  test55.sh         R      n05(1)
+277500  xxxxxxxx  test56.sh         R      n08(1)
+277501  xxxxxxxx  test57.sh         R      n08(1)
+277502  xxxxxxxx  test58.sh         R      n08(1)
+277503  xxxxxxxx  test59.sh         R      n09(1)
+277505  xxxxxxxx  test60.sh         R      n09(1)
+277506  xxxxxxxx  test61.sh         R      n08(1)
+277507  xxxxxxxx  test62.sh         R      n09(1)
+277508  xxxxxxxx  test63.sh         R      n09(1)
+277509  xxxxxxxx  test64.sh         R      n10(1)
+277510  xxxxxxxx  test65.sh         R      n10(1)
+277511  xxxxxxxx  test66.sh         R      n10(1)
+277512  xxxxxxxx  test67.sh         R      n10(1)
+277513  xxxxxxxx  test68.sh         R      n11(1)
+277514  xxxxxxxx  test69.sh         R      n11(1)
+277515  xxxxxxxx  test70.sh         R      n11(1)
+277516  xxxxxxxx  test71.sh         R      n14(1)
+277517  xxxxxxxx  test72.sh         R      n14(1)
+277518  xxxxxxxx  test73.sh         R      n14(1)
+277519  xxxxxxxx  test74.sh         R      n14(1)
+277520  xxxxxxxx  test75.sh         R      n16(1)
+277521  xxxxxxxx  test76.sh         R      n16(1)
+277522  xxxxxxxx  test77.sh         R      n16(1)
+277523  xxxxxxxx  test78.sh         R      n16(1)
+277524  xxxxxxxx  test79.sh         R      n16(1)
+277525  xxxxxxxx  test80.sh         R      n16(1)
+277526  xxxxxxxx  test81.sh         R      n16(1)
+277527  xxxxxxxx  test82.sh         R      n17(1)
+277528  xxxxxxxx  test83.sh         R      n17(1)
+277529  xxxxxxxx  test84.sh         R      n17(1)
+277530  xxxxxxxx  test85.sh         R      n17(1)
+277531  xxxxxxxx  test86.sh         R      n17(1)
+277532  xxxxxxxx  test87.sh         R      n19(1)
+277533  xxxxxxxx  test88.sh         R      n19(1)
+277534  xxxxxxxx  test89.sh         R      n19(1)
+277535  xxxxxxxx  test90.sh         R      n19(1)
+277536  xxxxxxxx  test91.sh         R      n21(1)
+277537  xxxxxxxx  test92.sh         R      n21(1)
+277538  xxxxxxxx  test93.sh         R      n21(1)
+277539  xxxxxxxx  test94.sh         R      n21(1)
+277540  xxxxxxxx  test95.sh         R      n21(1)
+277541  xxxxxxxx  test96.sh         R      n21(1)
+277542  xxxxxxxx  test97.sh         R      n21(1)
+277543  xxxxxxxx  test98.sh         R      n22(1)
+277544  xxxxxxxx  test99.sh         R      n22(1)
+277545  xxxxxxxx  test100.sh        R      n24(1)
+277550  xxxxxxxx  STDIN             R      n17(1)
+277556  xxxxxxxx  command_1kv2_f.s  R      n05(4)
+277657  xxxxxxxx  STDIN             R      n12(1)
+277672  xxxxxxxx  STDIN             R      n22(1)
+277719  xxxxxxxx  STDIN             R      n34(1)
+277755  xxxxxxxx  STDIN             R      n29(1)
+277783  xxxxxxxx  STDIN             R      n21(1)
+277784  xxxxxxxx  STDIN             R      n24(1)
+277786  xxxxxxxx  STDIN             R      n24(1)
+277796  xxxxxxxx  STDIN             R      n12(1)
+277802  xxxxxxxx  STDIN             R      n12(1)
+277861  xxxxxxxx  STDIN             R      n24(1)
+277878  xxxxxxxx  STDIN             R      n08(1)
+277914  xxxxxxxx  STDIN             R      n31(1)
+277961  xxxxxxxx  STDIN             R      n19(1)
+277993  xxxxxxxx  command_3hv6_nd3  R      n12(4)
+278220  xxxxxxxx  SSSUMTcauSS_5.sh  R      n04(1)
+278224  xxxxxxxx  command_to6_n.sh  R      n18(4)
+278228  xxxxxxxx  sa1.sh            R      n11(1)
+278229  xxxxxxxx  sa1.sh            R      n17(1)
+278230  xxxxxxxx  sa1.sh            R      n19(1)
+278231  xxxxxxxx  sa1.sh            R      n19(1)
+278233  xxxxxxxx  test01.sh         R      n05(1)
+278234  xxxxxxxx  test02.sh         R      n05(1)
+278235  xxxxxxxx  test03.sh         R      n08(1)
+278236  xxxxxxxx  test04.sh         R      n08(1)
+278237  xxxxxxxx  test05.sh         R      n12(1)
+278238  xxxxxxxx  test06.sh         R      n19(1)
+278239  xxxxxxxx  test07.sh         R      n22(1)
+278240  xxxxxxxx  test08.sh         R      n22(1)
+278241  xxxxxxxx  test09.sh         R      n22(1)
+278242  xxxxxxxx  test10.sh         R      n22(1)
+278324  xxxxxxxx  start14.sh        R      n26(1)
+278325  xxxxxxxx  STDIN             R      n08(1)
+278326  xxxxxxxx  STDIN             R      n09(1)
+278327  xxxxxxxx  STDIN             R      n09(1)
+278328  xxxxxxxx  STDIN             R      n09(1)
+278329  xxxxxxxx  STDIN             R      n09(1)
+278330  xxxxxxxx  STDIN             R      n10(1)
+278331  xxxxxxxx  STDIN             R      n10(1)
+278332  xxxxxxxx  STDIN             R      n10(1)
+278333  xxxxxxxx  STDIN             R      n10(1)
+278334  xxxxxxxx  STDIN             R      n11(1)
+278335  xxxxxxxx  STDIN             R      n16(1)
+278336  xxxxxxxx  STDIN             R      n17(1)
+278337  xxxxxxxx  STDIN             R      n18(1)
+278338  xxxxxxxx  STDIN             R      n18(1)
+278339  xxxxxxxx  STDIN             R      n18(1)
+278340  xxxxxxxx  STDIN             R      n18(1)
+278341  xxxxxxxx  STDIN             R      n24(1)
+278342  xxxxxxxx  STDIN             R      n24(1)
+278343  xxxxxxxx  STDIN             R      n24(1)
+278344  xxxxxxxx  STDIN             R      n24(1)
+278345  xxxxxxxx  STDIN             R      n26(1)
+278346  xxxxxxxx  STDIN             R      n26(1)
+278347  xxxxxxxx  STDIN             R      n26(1)
+278348  xxxxxxxx  STDIN             R      n26(1)
+278349  xxxxxxxx  STDIN             R      n26(1)
+278350  xxxxxxxx  STDIN             R      n26(1)
+278351  xxxxxxxx  STDIN             R      n26(1)
+278352  xxxxxxxx  STDIN             R      n27(1)
+278353  xxxxxxxx  STDIN             R      n27(1)
+278354  xxxxxxxx  STDIN             R      n27(1)
+278355  xxxxxxxx  STDIN             R      n27(1)
+278356  xxxxxxxx  STDIN             R      n27(1)
+278357  xxxxxxxx  STDIN             R      n27(1)
+278358  xxxxxxxx  STDIN             R      n27(1)
+278359  xxxxxxxx  STDIN             R      n29(1)
+278360  xxxxxxxx  STDIN             R      n29(1)
+278361  xxxxxxxx  STDIN             R      n29(1)
+278362  xxxxxxxx  STDIN             R      n29(1)
+278363  xxxxxxxx  STDIN             R      n29(1)
+278364  xxxxxxxx  STDIN             R      n29(1)
+278365  xxxxxxxx  STDIN             R      n29(1)
+278366  xxxxxxxx  STDIN             R      n30(1)
+278367  xxxxxxxx  STDIN             R      n30(1)
+278368  xxxxxxxx  STDIN             R      n30(1)
+278369  xxxxxxxx  STDIN             R      n30(1)
+278370  xxxxxxxx  STDIN             R      n30(1)
+278371  xxxxxxxx  STDIN             R      n30(1)
+278372  xxxxxxxx  STDIN             R      n30(1)
+278373  xxxxxxxx  STDIN             R      n30(1)
+278374  xxxxxxxx  STDIN             R      n31(1)
