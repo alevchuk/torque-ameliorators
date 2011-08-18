@@ -38,13 +38,15 @@ nodes_down = (ALL_NODES - nodes_in_torque) + nodes_down_in_torque
 
 nodes_up = nodes_in_torque - nodes_down_in_torque
 
-
 # Among the "free" nodes, find ones that do NOT have any jobs
 nodes_100_free =
   `qnodes`.split("\n\n").select {|n| n =~ /state = free/ and !(n =~ /jobs = /)}
 nodes_100_free.collect! {|line| line.split("\n").first }
 nodes_100_free = nodes_100_free.select {|i| nodes_in_torque.include? i} # To remove excludes
 
+nodes_down.sort!
+nodes_up.sort!
+nodes_100_free.sort!
 
 puts "Nodes up: ".rjust(WINDOW_WIDTH) + nodes_up.join(' ')
 puts "Total: ".rjust(WINDOW_WIDTH) + nodes_up.size.to_s
