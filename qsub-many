@@ -1,0 +1,232 @@
+#!/usr/bin/ruby
+
+# torque-ameliorators  interrogate Torque to report state of cluster
+# Copyright (C) 2011 Aleksandr Levchuk
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+
+
+
+QSUB_MANY_VERSION = "0.9.9"
+
+raw = `/usr/local/bin/free-cores`.split("\n")
+FREE_CORES = raw[0..-3].collect do |line|
+  a = line.split(' ')
+  [a[0].chomp(":"), a[1].to_i]
+end
+
+FREE_CORES_TOTAL = FREE_CORES.inject(0){|sum, i| sum + i[1]}
+CORES_TOTAL = raw[-1].to_i
+
+MINIMAL_FIRENDLY_PORTION = 0.10
+
+
+
+# Help
+
+if ARGV.include?('-h') or ARGV.include?('--help')
+  puts "Description: "
+  puts "  Takes a large list of commands from standard input (one command" +
+  " per line)"
+  puts "  and submits them to Biocluster in a good-citizen manner."
+  puts
+  puts "Usage examples: "
+  #puts "  echo \"cmd1\\ncmd2\\ncmd3\" | qsub-many"
+  puts "  cat list_of_commands_file | qsub-many"
+  puts
+  puts "Usage (syntax): "
+  puts "  qsub-many [-c cores] [-p cpp] [-fd]"
+  puts
+  puts "   -c  Specifies <cores> - the number of cores to be allocated."
+  puts "       (Default is 33% of free cores)"
+  puts "   -p  Specifies <cpp> - the number of cores-per-program"
+  puts "       when a program needs more than 1 CPU to run. (Default is 1)"
+  puts "   -f  Forces more programs to be submitted to the cluster."
+  puts "   -d  Do not confirm."
+  puts
+  puts "Cluster state observation commands:"
+  puts "  see processor-cores"
+  puts "  see nodes" 
+  puts "  see users"
+  puts "  see queue"
+
+  exit
+
+else
+  STDERR.puts "For help, please run \"qsub-many -h\""
+  STDERR.puts "To cancle, please press Ctrl-C..."
+  STDERR.puts
+end
+
+
+
+# Arguments
+
+args = ARGV
+
+@cores = nil
+@cpp = nil
+@force = false
+
+while args.include?('-c')
+  i = args.find_index('-c')
+  @cores = args[i + 1].to_i
+  args.delete_at(i)
+  args.delete_at(i)
+end
+
+while args.include?('-p')
+  i = args.find_index('-p')
+  @cpp = args[i + 1].to_i
+  args.delete_at(i)
+  args.delete_at(i)
+end
+
+while args.include?('-f')
+  @force = true
+  args.delete_at args.find_index('-f')
+end
+
+
+COMMANDS = STDIN.readlines.collect do |l|
+  if l=~/^[\s]*#/ or l=~ /^[\s]*$/ 
+    nil
+  else
+    l.chomp
+  end
+end
+
+COMMANDS.delete(nil)
+
+
+
+# Default number of cores per program
+if @cpp.nil?
+  @cpp = 1
+end
+
+# Default number of cores to use
+if @cores.nil?
+  @cores = FREE_CORES_TOTAL / 3
+  cluster_portion_left = (FREE_CORES_TOTAL - @cores) / CORES_TOTAL.to_f
+end
+
+# Figure out the size of chunks to run in parallel
+CHUNK_NUM  = @cores / @cpp
+
+# Adjust number of cores to make divisable by @cpp
+@cores = CHUNK_NUM * @cpp
+
+
+if @cores == 0
+  STDERR.puts \
+    "ERROR: The number of requested cores is 0.\n" + 
+    "       The default is to use 1/3 of the available cores, so\n" +
+    "       probably there is not enouth cores available at the moment."
+  exit(1)
+end
+
+
+
+# Check if use if being a good citizen
+cluster_portion_left = (FREE_CORES_TOTAL - @cores) / CORES_TOTAL.to_f
+
+if (cluster_portion_left * 100).ceil <
+  (MINIMAL_FIRENDLY_PORTION * 100).floor and !@force
+  STDERR.puts \
+    "ERROR: You are leaving #{(cluster_portion_left * 100).floor}% " +
+    "of the cluster cores for other users.\n" +
+    "       That's less than #{(MINIMAL_FIRENDLY_PORTION * 100).ceil}%.\n\n" +
+    "       Please use the -c argument to specify the desired number " +
+    "of cores\n" +
+    "       or add the -f argument to procceed anyway."
+  exit(1)
+end
+
+
+
+
+
+
+# Split commands
+CHUNKS = []
+COMMANDS.each_with_index do |cmd, i|
+  chunk_id = i % CHUNK_NUM
+  if CHUNKS[chunk_id].nil?
+    CHUNKS[chunk_id] = [cmd]
+  else
+    CHUNKS[chunk_id].push cmd
+  end
+end
+
+
+
+# Test that all commands are present
+raise "No all commands are present after splitting into batches" if
+  CHUNKS.flatten.sort != COMMANDS.sort
+
+def script_name_generator(i)
+  "./s-#{(i+1).to_s.rjust(4, '0')}"
+end
+
+if cluster_portion_left < 0
+  STDERR.puts "NOTE: #{FREE_CORES_TOTAL} cores are available at this moment"
+  STDERR.puts \
+    "ERROR: Not enough cluster resources available to process your request."
+  exit(1)
+end
+
+
+STDERR.puts "Summary:"
+STDERR.puts "  - #{FREE_CORES_TOTAL} cores are available at this moment"
+STDERR.puts "  - Your #{COMMANDS.size} commands will run on " +
+            "#{@cores} parrallel cores (#{@cpp} cores per process)"
+STDERR.puts "  - Once this is submitted, " +
+            "#{'%.1f' % (cluster_portion_left * 100)}% of the " +
+            "operating cores will remain available"
+STDERR.puts
+# CHUNKS.each {|i| puts i.size}
+
+
+CHUNKS.each_with_index do |cmds, i|
+  script_name = script_name_generator(i)
+  if File.exists?(script_name)
+    STDERR.puts "WARNING: #{script_name} will be overwritten."
+  end
+end
+
+
+if !ARGV.include?('-d')
+  STDERR.puts "To cancel, please press Ctrl-C within the next 20 seconds..."
+  
+  sleep 20
+  STDERR.puts "5 seconds remaing..."
+  sleep 5
+end
+
+
+STDERR.puts "\n\nSubmitted script files:"
+CHUNKS.each_with_index do |cmds, i|
+  script_name = script_name_generator(i)
+  File.open(script_name, 'w') do |f|
+    cmds.each do |cmd|
+      f.puts cmd
+    end
+  end
+  `qsub -d #{Dir.pwd} -l nodes=1:ppn=#{@cpp} #{script_name}`
+  puts script_name
+end
+
+STDERR.puts "\n\n\nSubmitted #{COMMANDS.size} commands.\n\n" +
+  "Please use \"see q\" to check status...\n\n"
